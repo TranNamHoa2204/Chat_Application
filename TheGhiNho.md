@@ -420,3 +420,20 @@ Luồng C (Client C đang gửi tin nhắn):
 - Dữ liệu không nhất quán: Hai luồng cùng sửa danh sách có thể gây lỗi logic
 
 - NullPointerException: Có thể lấy được client đã bị xóa từ luồng khác
+
+* giải pháp:
+- synchronized tạo ra khóa (lock) trên đối tượng ChatServer.clients:
+synchronized (ChatServer.clients) {
+    // Chỉ có 1 luồng được vào đây tại 1 thời điểm
+    ChatServer.clients.remove(this);
+}
+
+Nguyên lý hoạt động:
+
+Luồng A vào khối synchronized → giành lock
+
+Luồng B muốn vào → phải chờ đến khi A giải phóng lock
+
+Luồng A thực hiện xong → giải phóng lock
+
+Luồng B được vào → tiếp tục thực hiện
