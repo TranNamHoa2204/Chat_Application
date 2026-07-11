@@ -401,3 +401,22 @@ Server lưu Username
 
 Bắt đầu chat
 - Tức là chỉ gửi Username một lần duy nhất, sau đó mới gửi các tin nhắn.
+
+# Synchorized
+Luồng A (Client A đang ngắt kết nối):
+    ChatServer.clients.remove(A);  // Đang xóa A
+
+Luồng B (Client B đang ngắt kết nối):
+    ChatServer.clients.remove(B);  // Đang xóa B
+
+Luồng C (Client C đang gửi tin nhắn):
+    for (ClientHandler client : ChatServer.clients) {  // Đang duyệt danh sách
+        client.sendMessage(msg);
+    }
+
+* Có thể bị
+- ConcurrentModificationException: Khi một luồng đang duyệt danh sách (for loop) mà luồng khác lại thay đổi danh sách (xóa phần tử)
+
+- Dữ liệu không nhất quán: Hai luồng cùng sửa danh sách có thể gây lỗi logic
+
+- NullPointerException: Có thể lấy được client đã bị xóa từ luồng khác

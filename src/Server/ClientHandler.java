@@ -25,21 +25,14 @@ public class ClientHandler extends Thread {
             this.username = dis.readUTF();
             System.out.println("Client [" + this.username + "] đã tham gia phòng chat.");
 
+            broadcastMessage("Hệ thống: " + this.username + " đã tham gia phòng chat.");
+
             // Vòng lặp xử lý tin nhắn chat
             while (true) {
-                // Đọc tin nhắn gốc của user
                 String msg = dis.readUTF();
-
-                // 2. Ghép username vào trước tin nhắn
                 String formattedMsg = this.username + ": " + msg;
-
-                for (ClientHandler client : ChatServer.clients) {
-                    if (client != this) { 
-                        // Gửi tin nhắn đã có kèm tên cho những người khác
-                        client.sendMessage(formattedMsg);
-                        //sendMessage(formattedMsg); không thì chỉ gửi chính mình
-                    }
-                }
+                System.out.println(formattedMsg);
+                broadcastMessage(formattedMsg);
             }
         } catch (IOException e) {
             System.out.println("Client [" + (this.username != null ? this.username : socket.getInetAddress()) + "] đã ngắt kết nối.");
@@ -89,5 +82,6 @@ public class ClientHandler extends Thread {
             }
         }
     }
+
 }
 
