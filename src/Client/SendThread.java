@@ -4,37 +4,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Scanner;
 
-public class SendThread extends Thread{
+public class SendThread extends Thread {
     private String msg;
-    private String username;
     private Scanner scanner;
     private DataOutputStream dos;
-    
 
-    public void SendThread(DataOutputStream dos){
-        this.dos =  dos;
+    public SendThread(DataOutputStream dos) {
+        this.dos = dos;
+        this.scanner = new Scanner(System.in);
     }
 
     @Override
     public void run() {
-        // Sửa chỗ này
+        try {
+            while (true) {
 
-        System.out.println("Vui lòng nhập tên: ");
-        username = scanner.nextLine();
+                System.out.println("Nhập tin nhắn: ");
+                msg = scanner.nextLine();
 
-        dos.writeUTF(username);
-        dos.flush();
-
-        while (true) {
-            msg = scanner.nextLine();
-            try {
                 dos.writeUTF(msg);
                 dos.flush();
-            } catch (IOException e) {
-                // TODO: handle exception
-                System.out.println("Lỗi gửi tin nhắn");
             }
-            
+        } catch (IOException e) {
+            // TODO: handle exception
+            System.out.println("Lỗi gửi tin nhắn");
         }
 
     }

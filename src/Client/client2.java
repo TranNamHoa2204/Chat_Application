@@ -28,12 +28,8 @@ public class client2 {
             ReceiveThread receiveThread = new ReceiveThread(dis);
             receiveThread.start();
 
-            // Vòng lặp này CHỈ dùng để gửi tin nhắn
-            while (true) {
-                String message = scanner.nextLine();
-                dos.writeUTF(message);
-                dos.flush();
-            }
+            SendThread sendThread = new SendThread(dos);
+            sendThread.start();
 
         } catch (IOException e) {
             System.out.println("Kết nối thất bại hoặc bị ngắt.");
