@@ -16,6 +16,8 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
+import Controller.ChatController;
+
 public class LoginFrame extends JFrame {
     private JTextField txtUsername;
     private JPasswordField txtPassword;
@@ -97,19 +99,16 @@ public class LoginFrame extends JFrame {
         }
 
         try {
-            // Khởi tạo kết nối Socket đến Server
-            Socket socket = new Socket("localhost", 5000);
+        	// Tạo bộ não điều khiển trước
+        	ChatController controller = new ChatController("localhost", 5000, username);
 
-            // Gửi luôn Username làm tin nhắn đầu tiên như kịch bản của Server
-            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-            dos.writeUTF(username);
-            dos.flush();
+        	// Tạo giao diện và truyền bộ não vào
+        	ChatFrame chatFrame = new ChatFrame(controller);
 
-            // Đăng nhập thành công -> Mở ChatFrame và truyền kết nối hiện tại sang
-            new ChatFrame(socket, username);
-
-            // Đóng cửa sổ Login
-            this.dispose();
+        	// Kích hoạt luồng nghe tin nhắn từ controller
+        	controller.startListening();
+        	
+        	this.dispose();
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Không thể kết nối tới Server. Hãy chắc chắn Server đang chạy!",
