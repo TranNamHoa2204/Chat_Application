@@ -11,7 +11,7 @@ public class ChatClient {
         Scanner scanner = new Scanner(System.in);
 
         try {
-            
+
             // 1. Nhập username trước
             System.out.print("Nhập username của bạn: ");
             String username = scanner.nextLine();
@@ -22,7 +22,8 @@ public class ChatClient {
             DataInputStream dis = new DataInputStream(socket.getInputStream());
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 
-            // 2. Gửi username lên Server ngay lập tức (đây sẽ là tin nhắn đầu tiên Server nhận được)
+            // 2. Gửi username lên Server ngay lập tức (đây sẽ là tin nhắn đầu tiên Server
+            // nhận được)
             dos.writeUTF(username);
             dos.flush();
 
