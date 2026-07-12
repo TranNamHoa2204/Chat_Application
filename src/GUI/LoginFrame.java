@@ -21,11 +21,11 @@ import Controller.ChatController;
 public class LoginFrame extends JFrame {
     private JTextField txtUsername;
     private JPasswordField txtPassword;
-    private JButton btnLogin, btnCancel;
+    private JButton btnLogin, btnCancel, btnOpenRegister;
 
     public LoginFrame() {
         this.setTitle("Đăng nhập Hệ thống");
-        this.setSize(400, 250);
+        this.setSize(400, 280);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
 
@@ -78,11 +78,23 @@ public class LoginFrame extends JFrame {
         gbc.anchor = GridBagConstraints.CENTER;
         mainPanel.add(pnButton, gbc);
 
+        // Nút Mở trang Đăng ký
+        btnOpenRegister = new JButton("Chưa có tài khoản? Đăng ký ngay!");
+        btnOpenRegister.setContentAreaFilled(false);
+        btnOpenRegister.setBorderPainted(false);
+        btnOpenRegister.setFocusPainted(false);
+        btnOpenRegister.setForeground(java.awt.Color.BLUE);
+        btnOpenRegister.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+
+        gbc.gridy = 3;
+        mainPanel.add(btnOpenRegister, gbc);
+
         add(mainPanel);
 
         // Đăng ký sự kiện TRƯỚC KHI hiển thị giao diện
         btnLogin.addActionListener(e -> login());
         btnCancel.addActionListener(e -> dispose());
+        btnOpenRegister.addActionListener(e -> new RegisterFrame());
         getRootPane().setDefaultButton(btnLogin);
 
         this.setVisible(true);
@@ -99,16 +111,16 @@ public class LoginFrame extends JFrame {
         }
 
         try {
-        	// Tạo bộ não điều khiển trước
-        	ChatController controller = new ChatController("localhost", 5000, username);
+            // Tạo bộ não điều khiển trước
+            ChatController controller = new ChatController("localhost", 5000, username);
 
-        	// Tạo giao diện và truyền bộ não vào
-        	ChatFrame chatFrame = new ChatFrame(controller);
+            // Tạo giao diện và truyền bộ não vào
+            ChatFrame chatFrame = new ChatFrame(controller);
 
-        	// Kích hoạt luồng nghe tin nhắn từ controller
-        	controller.startListening();
-        	
-        	this.dispose();
+            // Kích hoạt luồng nghe tin nhắn từ controller
+            controller.startListening();
+
+            this.dispose();
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Không thể kết nối tới Server. Hãy chắc chắn Server đang chạy!",
