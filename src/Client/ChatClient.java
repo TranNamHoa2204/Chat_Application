@@ -8,8 +8,9 @@ import java.util.Scanner;
 
 public class ChatClient {
     public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
         try {
-            Scanner scanner = new Scanner(System.in);
             
             // 1. Nhập username trước
             System.out.print("Nhập username của bạn: ");
@@ -25,10 +26,10 @@ public class ChatClient {
             dos.writeUTF(username);
             dos.flush();
 
-            ReceiveThread receiveThread = new ReceiveThread(dis);
+            ReceiveThread receiveThread = new ReceiveThread(dis, socket);
             receiveThread.start();
 
-            SendThread sendThread = new SendThread(dos);
+            SendThread sendThread = new SendThread(dos, socket, scanner);
             sendThread.start();
 
         } catch (IOException e) {

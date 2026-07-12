@@ -11,7 +11,7 @@ public class client2 {
         try {
             Scanner scanner = new Scanner(System.in);
 
-            System.out.println("Nhập tên please: ");
+            System.out.println("Nhập username của bạn: ");
             String username = scanner.nextLine();
 
             Socket socket = new Socket("localhost", 5000);
@@ -25,10 +25,10 @@ public class client2 {
             dos.flush();
 
             // Khởi động thread nhận dữ liệu từ Server (Chỉ chạy 1 lần duy nhất)
-            ReceiveThread receiveThread = new ReceiveThread(dis);
+            ReceiveThread receiveThread = new ReceiveThread(dis, socket);
             receiveThread.start();
 
-            SendThread sendThread = new SendThread(dos);
+            SendThread sendThread = new SendThread(dos, socket, scanner);
             sendThread.start();
 
         } catch (IOException e) {

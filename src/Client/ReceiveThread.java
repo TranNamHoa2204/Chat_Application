@@ -2,23 +2,30 @@ package Client;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.net.Socket;
 
 public class ReceiveThread extends Thread {
     private DataInputStream dis;
+    private Socket socket;
 
-    public ReceiveThread(DataInputStream dis) {
+    public ReceiveThread(DataInputStream dis, Socket socket) {
         this.dis = dis;
+        this.socket = socket;
     }
 
     @Override
     public void run() {
         try {
-            while (true) {
+            while (!socket.isClosed()) {
                 String message = dis.readUTF();
-                System.out.println(message);
+                // In thẳng tin nhắn nhận được ra màn hình
+                System.out.println("\n" + message);
+                System.out.print("> Gửi: "); // Nhắc lại dòng lệnh để User biết mình vẫn đang gõ ở đâu
             }
         } catch (IOException e) {
-            System.out.println("Mất kết nối tới Server hoặc Server đã đóng.");
+            if(!socket.isClosed()){
+                System.out.println("\n>> Mất kết nối tới Server hoặc Server đã đóng.");
+            }
         }
     }
 }

@@ -3,9 +3,6 @@ package GUI;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -16,7 +13,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-public class ChatFrame extends JFrame implements ActionListener {
+public class ChatFrame extends JFrame{
     // Khai báo các thành phần giao diện
     private JList<String> listOnline; // Danh sách người dùng online (bên trái)
     private JTextArea txtHienThiTinNhan; // Khung hiển thị nội dung chat (ở giữa)
@@ -72,7 +69,7 @@ public class ChatFrame extends JFrame implements ActionListener {
         add(pnCenter, BorderLayout.CENTER);
         add(pnSouth, BorderLayout.SOUTH);
 
-        btnGui.addActionListener(this);
+        btnGui.addActionListener(e -> guiTinNhan());
 
         // Hiển thị giao diện
         setVisible(true);
@@ -84,10 +81,8 @@ public class ChatFrame extends JFrame implements ActionListener {
         javax.swing.SwingUtilities.invokeLater(() -> new ChatFrame());
     }
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    private void guiTinNhan(){
+       
+    }
 
 }
