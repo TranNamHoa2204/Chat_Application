@@ -88,4 +88,10 @@ public class ChatFrame extends JFrame {
             txtHienThiTinNhan.setCaretPosition(txtHienThiTinNhan.getDocument().getLength());
         });
     }
+
+    public void updateOnlineList(String[] users) {
+        SwingUtilities.invokeLater(() -> {
+            listOnline.setListData(users);
+        });
+    }
 }

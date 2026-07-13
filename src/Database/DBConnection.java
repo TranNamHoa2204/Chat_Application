@@ -8,7 +8,7 @@ public class DBConnection {
     // Thay đổi thông tin kết nối phù hợp với máy của bạn
     private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=JavaChatApp;encrypt=false;trustServerCertificate=true;";
     private static final String USERNAME = "sa"; // Hoặc tài khoản SQL Server của bạn
-    private static final String PASSWORD = "your_password"; // Mật khẩu sa SQL Server của bạn
+    private static final String PASSWORD = "sapassword"; // Mật khẩu sa SQL Server của bạn
 
     public static Connection getConnection() throws SQLException {
         try {

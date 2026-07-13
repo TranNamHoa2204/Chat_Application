@@ -11,6 +11,8 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
+import Controller.ChatController;
+import java.io.IOException;
 
 public class RegisterFrame extends JFrame {
     private JTextField txtHo, txtTen, txtUsername;
@@ -73,9 +75,31 @@ public class RegisterFrame extends JFrame {
         // Sự kiện nút bấm
         btnCancel.addActionListener(e -> dispose());
         btnRegister.addActionListener(e -> {
-            // TODO: Thiết lập kết nối Database và lưu user vào DB
-            javax.swing.JOptionPane.showMessageDialog(this, "Đăng ký thành công (Demo)!", "Thông báo", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-            dispose();
+            String username = txtUsername.getText().trim();
+            String password = new String(txtPassword.getPassword()).trim();
+
+            if (username.isEmpty() || password.isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ Username và Password!", "Lỗi",
+                        javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                ChatController tempController = new ChatController("localhost", 5000);
+                if (tempController.register(username, password)) {
+                    javax.swing.JOptionPane.showMessageDialog(this, "Đăng ký thành công!", "Thông báo",
+                            javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                    tempController.closeConnection();
+                    dispose();
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(this, "Đăng ký thất bại. Tài khoản có thể đã tồn tại!", "Lỗi",
+                            javax.swing.JOptionPane.ERROR_MESSAGE);
+                    tempController.closeConnection();
+                }
+            } catch (IOException ex) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Không thể kết nối hoặc đăng ký tới Server: " + ex.getMessage(),
+                        "Lỗi Kết Nối", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         this.setVisible(true);

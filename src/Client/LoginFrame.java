@@ -1,4 +1,4 @@
-package GUI;
+package Client;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -17,6 +17,8 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import Controller.ChatController;
+import GUI.ChatFrame;
+import GUI.RegisterFrame;
 
 public class LoginFrame extends JFrame {
     private JTextField txtUsername;

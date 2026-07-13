@@ -34,7 +34,7 @@ public class SendThread extends Thread {
                     continue;
                 }
 
-                dos.writeUTF(msg);
+                dos.writeUTF("PUB_MSG|" + msg);
                 dos.flush();
             }
         } catch (IOException e) {

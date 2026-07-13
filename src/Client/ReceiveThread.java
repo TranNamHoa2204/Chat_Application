@@ -17,10 +17,15 @@ public class ReceiveThread extends Thread {
     public void run() {
         try {
             while (!socket.isClosed()) {
-                String message = dis.readUTF();
-                // In thẳng tin nhắn nhận được ra màn hình
-                System.out.println("\n" + message);
-                System.out.print("> Gửi: "); // Nhắc lại dòng lệnh để User biết mình vẫn đang gõ ở đâu
+                String rawMsg = dis.readUTF();
+                String[] parts = rawMsg.split("\\|", 3);
+                if (parts.length >= 3 && "MSG".equals(parts[0])) {
+                    String sender = parts[1];
+                    String content = parts[2];
+                    // In tin nhắn có định dạng rõ ràng
+                    System.out.println("\n" + sender + ": " + content);
+                    System.out.print("> Gửi: "); // Nhắc lại dòng lệnh để User biết mình vẫn đang gõ ở đâu
+                }
             }
         } catch (IOException e) {
             if(!socket.isClosed()){

@@ -13,15 +13,39 @@ public class ChatController {
     private String username;
     private ChatFrame view; // Giữ liên kết tới giao diện để đổ dữ liệu lên
 
-    public ChatController(String host, int port, String username) throws IOException {
-        this.username = username;
+    public ChatController(String host, int port) throws IOException {
         this.socket = new Socket(host, port);
         this.dis = new DataInputStream(socket.getInputStream());
         this.dos = new DataOutputStream(socket.getOutputStream());
-        
-        // Gửi username lên server ngay khi kết nối thành công
-        this.dos.writeUTF(username);
-        this.dos.flush();
+    }
+
+    public boolean login(String username, String password) throws IOException {
+        this.username = username;
+        dos.writeUTF("LOGIN|" + username + "|" + password);
+        dos.flush();
+
+        String response = dis.readUTF();
+        if ("LOGIN_SUCCESS".equals(response)) {
+            return true;
+        } else if (response.startsWith("LOGIN_FAIL|")) {
+            String reason = response.split("\\|")[1];
+            throw new IOException(reason);
+        }
+        return false;
+    }
+
+    public boolean register(String username, String password) throws IOException {
+        dos.writeUTF("REGISTER|" + username + "|" + password);
+        dos.flush();
+
+        String response = dis.readUTF();
+        if ("REGISTER_SUCCESS".equals(response)) {
+            return true;
+        } else if (response.startsWith("REGISTER_FAIL|")) {
+            String reason = response.split("\\|")[1];
+            throw new IOException(reason);
+        }
+        return false;
     }
 
     public void setView(ChatFrame view) {
@@ -35,7 +59,7 @@ public class ChatController {
     // Logic gửi tin nhắn được chuyển về đây
     public void sendTextMessage(String msg) {
         try {
-            dos.writeUTF(msg);
+            dos.writeUTF("PUB_MSG|" + msg);
             dos.flush();
         } catch (IOException e) {
             if (view != null) view.appendMessage(">> Lỗi: Không thể gửi tin nhắn.");
@@ -47,9 +71,22 @@ public class ChatController {
         Thread receiveThread = new Thread(() -> {
             try {
                 while (socket != null && !socket.isClosed()) {
-                    String msgText = dis.readUTF();
-                    if (view != null) {
-                        view.appendMessage(msgText); // Gọi giao diện hiển thị hộ
+                    String rawMsg = dis.readUTF();
+                    String[] parts = rawMsg.split("\\|", 3);
+                    if (parts.length >= 2) {
+                        String cmd = parts[0];
+                        if (cmd.equals("MSG")) {
+                            String sender = parts[1];
+                            String content = parts[2];
+                            if (view != null) {
+                                view.appendMessage(sender + ": " + content);
+                            }
+                        } else if (cmd.equals("ONLINE_LIST")) {
+                            String listStr = parts[1];
+                            if (view != null) {
+                                view.updateOnlineList(listStr.split(","));
+                            }
+                        }
                     }
                 }
             } catch (IOException e) {
