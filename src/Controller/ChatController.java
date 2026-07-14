@@ -62,7 +62,8 @@ public class ChatController {
             dos.writeUTF("PUB_MSG|" + msg);
             dos.flush();
         } catch (IOException e) {
-            if (view != null) view.appendMessage(">> Lỗi: Không thể gửi tin nhắn.");
+            if (view != null)
+                view.appendMessage(">> Lỗi: Không thể gửi tin nhắn.");
         }
     }
 
@@ -90,7 +91,8 @@ public class ChatController {
                     }
                 }
             } catch (IOException e) {
-                if (view != null) view.appendMessage(">> Mất kết nối tới máy chủ.");
+                if (view != null)
+                    view.appendMessage(">> Mất kết nối tới máy chủ.");
             }
         });
         receiveThread.setDaemon(true);
@@ -99,9 +101,12 @@ public class ChatController {
 
     public void closeConnection() {
         try {
-            if (dos != null) dos.close();
-            if (dis != null) dis.close();
-            if (socket != null && !socket.isClosed()) socket.close();
+            if (dos != null)
+                dos.close();
+            if (dis != null)
+                dis.close();
+            if (socket != null && !socket.isClosed())
+                socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
