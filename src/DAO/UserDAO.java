@@ -71,4 +71,42 @@ public class UserDAO {
         }
         return users;
     }
+
+    // Đổi password (sau khi đã xác minh password cũ)
+    public static boolean doiMatKhau(String username, String oldPassword, String newPassword) {
+        // Xác minh password cũ trước
+        if (!kiemTraDangNhap(username, oldPassword)) {
+            return false;
+        }
+        String sql = "UPDATE users SET password = ? WHERE username = ?";
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newPassword);
+            ps.setString(2, username);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi doiMatKhau: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Đổi username
+    public static boolean doiUsername(String oldUsername, String newUsername, String password) {
+        // Xác minh password trước khi cho đổi username
+        if (!kiemTraDangNhap(oldUsername, password)) {
+            return false;
+        }
+        String sql = "UPDATE users SET username = ? WHERE username = ?";
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newUsername);
+            ps.setString(2, oldUsername);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            // Lỗi unique constraint = username đã tồn tại
+            System.err.println("Lỗi doiUsername: " + e.getMessage());
+            return false;
+        }
+    }
+
 }
