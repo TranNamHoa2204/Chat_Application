@@ -11,6 +11,7 @@ public class ChatController {
     private DataInputStream dis;
     private DataOutputStream dos;
     private String username;
+    private String currentReceiver;
     private ChatFrame view; // Giữ liên kết tới giao diện để đổ dữ liệu lên
 
     public ChatController(String host, int port) throws IOException {
@@ -48,6 +49,14 @@ public class ChatController {
         return false;
     }
 
+    public void setCurrentReceiver(String currentReceiver) {
+        this.currentReceiver = currentReceiver;
+    }
+
+    public String getCurrentReceiver() {
+        return currentReceiver;
+    }
+
     public void setView(ChatFrame view) {
         this.view = view;
     }
@@ -57,13 +66,28 @@ public class ChatController {
     }
 
     // Logic gửi tin nhắn được chuyển về đây
+    // public void sendTextMessage(String msg) {
+    //     try {
+    //         dos.writeUTF("PUB_MSG|" + msg);
+    //         dos.flush();
+    //     } catch (IOException e) {
+    //         if (view != null)
+    //             view.appendMessage(">> Lỗi: Không thể gửi tin nhắn.");
+    //     }
+    // }
+
     public void sendTextMessage(String msg) {
         try {
-            dos.writeUTF("PUB_MSG|" + msg);
+            if (currentReceiver == null || currentReceiver.isEmpty()) {
+                dos.writeUTF("PUB_MSG|" + msg);
+            } else {
+                dos.writeUTF("PRI_MSG|" + currentReceiver + "|" + msg);
+            }
             dos.flush();
         } catch (IOException e) {
-            if (view != null)
+            if (view != null) {
                 view.appendMessage(">> Lỗi: Không thể gửi tin nhắn.");
+            }
         }
     }
 
@@ -82,6 +106,14 @@ public class ChatController {
                             if (view != null) {
                                 view.appendMessage(sender + ": " + content);
                             }
+                            
+                        } else if (cmd.equals("PRIVATE_MSG")) {
+                            String sender = parts[1];
+                            String content = parts[2];
+                            if (view != null) {
+                                view.appendMessage("[Riêng] " + sender + ": " + content);
+                            }
+
                         } else if (cmd.equals("ONLINE_LIST")) {
                             String listStr = parts[1];
                             if (view != null) {
