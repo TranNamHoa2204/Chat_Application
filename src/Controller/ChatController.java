@@ -146,7 +146,20 @@ public class ChatController {
                         if (view != null) {
                             view.updateOnlineList(listStr.split(","));
                         }
+                    } else if (cmd.equals("CHANGE_SUCCESS")) {
+                        String msg = parts[1];
+                        if (view != null) view.appendMessage(">> " + msg);
+                        // Nếu đổi username thành công, cập nhật lại title
+                        if (msg.contains("username")) {
+                            String newName = msg.replace("Đổi username thành công. Username mới: ", "").trim();
+                            this.username = newName;
+                            if (view != null) view.updateTitle("Messenger - " + newName);
+                        }
+                    } else if (cmd.equals("CHANGE_FAIL")) {
+                        String reason = parts[1];
+                        if (view != null) view.appendMessage(">> Thất bại: " + reason);
                     }
+
                 }
             } catch (IOException e) {
                 if (view != null) {
@@ -171,4 +184,24 @@ public class ChatController {
             e.printStackTrace();
         }
     }
+
+    public void changePassword(String oldPassword, String newPassword) {
+        try {
+            dos.writeUTF("CHANGE_PASSWORD|" + oldPassword + "|" + newPassword);
+            dos.flush();
+        } catch (IOException e) {
+            if (view != null) view.appendMessage(">> Lỗi: Không thể gửi yêu cầu đổi mật khẩu.");
+        }
+    }
+
+    public void changeUsername(String newUsername, String password) {
+        try {
+            dos.writeUTF("CHANGE_USERNAME|" + newUsername + "|" + password);
+            dos.flush();
+        } catch (IOException e) {
+            if (view != null) view.appendMessage(">> Lỗi: Không thể gửi yêu cầu đổi username.");
+        }
+    }
+
+    
 }
