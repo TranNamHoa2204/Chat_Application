@@ -33,9 +33,9 @@ public class ClientHandler extends Thread {
             while (!authenticated) {
                 String rawMsg = dis.readUTF();
                 String[] parts = rawMsg.split("\\|", 3);
-                if (parts.length < 2) {
-                    continue;
-                }
+                // if (parts.length < 2) {
+                // continue;
+                // }
                 String cmd = parts[0];
 
                 if (cmd.equals("LOGIN")) {
@@ -76,22 +76,34 @@ public class ClientHandler extends Thread {
             while (true) {
                 String rawMsg = dis.readUTF();
                 String[] parts = rawMsg.split("\\|", 2);
-                if (parts.length < 2) continue;
+                if (parts.length < 2)
+                    continue;
                 String cmd = parts[0];
 
                 if (cmd.equals("PUB_MSG")) {
+                    if (parts.length < 2)
+                        continue;
+
                     String content = parts[1];
-                    
-                    // Lưu tin nhắn vào cơ sở dữ liệu
+
                     int senderId = UserDAO.getUserId(this.username);
                     if (senderId != -1) {
                         MessageDAO.luuTinNhan(senderId, null, content);
                     }
 
-                    // Forward gói tin tới tất cả Client khác
                     String formattedMsg = "MSG|" + this.username + "|" + content;
                     System.out.println(this.username + " (Public): " + content);
                     broadcastMessage(formattedMsg);
+                }
+
+                else if (cmd.equals("PRI_MSG")) {
+                    if (parts.length < 3)
+                        continue;
+
+                    String receiverUsername = parts[1];
+                    String content = parts[2];
+
+                    sendPrivateMessage(receiverUsername, content);
                 }
             }
         } catch (IOException e) {
@@ -142,6 +154,38 @@ public class ClientHandler extends Thread {
                 }
             }
         }
+    }
+
+    private void sendPrivateMessage(String receiverUsername, String content) {
+        ClientHandler receiver = findClientByUsername(receiverUsername);
+
+        if (receiver == null) {
+            sendMessage("MSG|Hệ thống|Người dùng " + receiverUsername + " hiện không online.");
+            return;
+        }
+
+        int senderId = UserDAO.getUserId(this.username);
+        int receiverId = UserDAO.getUserId(receiverUsername);
+
+        if (senderId != -1 && receiverId != -1) {
+            MessageDAO.luuTinNhan(senderId, receiverId, content);
+        }
+
+        String messageToReceiver = "PRIVATE_MSG|" + this.username + "|" + content;
+        receiver.sendMessage(messageToReceiver);
+
+        System.out.println(this.username + " -> " + receiverUsername + " (Private): " + content);
+    }
+
+    private ClientHandler findClientByUsername(String username) {
+        synchronized (ChatServer.clients) {
+            for (ClientHandler client : ChatServer.clients) {
+                if (client.username != null && client.username.equals(username)) {
+                    return client;
+                }
+            }
+        }
+        return null;
     }
 
     public static void broadcastOnlineList() {
