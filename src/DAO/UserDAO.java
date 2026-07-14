@@ -5,6 +5,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDAO {
     // 1. Kiểm tra đăng nhập
@@ -52,5 +54,21 @@ public class UserDAO {
             System.err.println("Lỗi getUserId: " + e.getMessage());
         }
         return -1;
+    }
+
+    public static List<String> getAllUsernames() {
+        List<String> users = new ArrayList<>();
+        String sql = "SELECT username FROM users ORDER BY username ASC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                users.add(rs.getString("username"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Loi getAllUsernames: " + e.getMessage());
+        }
+        return users;
     }
 }

@@ -33,12 +33,15 @@ public class ClientHandler extends Thread {
             while (!authenticated) {
                 String rawMsg = dis.readUTF();
                 String[] parts = rawMsg.split("\\|", 3);
-                // if (parts.length < 2) {
-                // continue;
-                // }
+                if (parts.length < 2) {
+                    continue;
+                }
                 String cmd = parts[0];
 
                 if (cmd.equals("LOGIN")) {
+                    if (parts.length < 3) {
+                        continue;
+                    }
                     String user = parts[1];
                     String pass = parts[2];
                     boolean success = UserDAO.kiemTraDangNhap(user, pass);
@@ -53,6 +56,9 @@ public class ClientHandler extends Thread {
                         dos.flush();
                     }
                 } else if (cmd.equals("REGISTER")) {
+                    if (parts.length < 3) {
+                        continue;
+                    }
                     String user = parts[1];
                     String pass = parts[2];
                     boolean success = UserDAO.dangKy(user, pass);
@@ -75,7 +81,7 @@ public class ClientHandler extends Thread {
             // Vòng lặp xử lý tin nhắn chat từ client
             while (true) {
                 String rawMsg = dis.readUTF();
-                String[] parts = rawMsg.split("\\|", 2);
+                String[] parts = rawMsg.split("\\|", 3);
                 if (parts.length < 2)
                     continue;
                 String cmd = parts[0];
@@ -104,6 +110,13 @@ public class ClientHandler extends Thread {
                     String content = parts[2];
 
                     sendPrivateMessage(receiverUsername, content);
+                } else if (cmd.equals("LOAD_PUBLIC_HISTORY")) {
+                    sendPublicHistory();
+                } else if (cmd.equals("LOAD_PRIVATE_HISTORY")) {
+                    if (parts.length < 2)
+                        continue;
+
+                    sendPrivateHistory(parts[1]);
                 }
             }
         } catch (IOException e) {
@@ -188,20 +201,42 @@ public class ClientHandler extends Thread {
         return null;
     }
 
+    private void sendPublicHistory() {
+        sendMessage("HISTORY_CLEAR|Chat chung");
+        for (String[] msg : MessageDAO.layLichSuChatChung()) {
+            sendMessage("HISTORY_MSG|" + msg[0] + "|" + msg[1]);
+        }
+    }
+
+    private void sendPrivateHistory(String otherUsername) {
+        sendMessage("HISTORY_CLEAR|Chat rieng voi " + otherUsername);
+        int currentUserId = UserDAO.getUserId(this.username);
+        int otherUserId = UserDAO.getUserId(otherUsername);
+
+        if (currentUserId == -1 || otherUserId == -1) {
+            return;
+        }
+
+        for (String[] msg : MessageDAO.layLichSuChatRieng(currentUserId, otherUserId)) {
+            sendMessage("HISTORY_MSG|" + msg[0] + "|" + msg[1]);
+        }
+    }
+
     public static void broadcastOnlineList() {
-        StringBuilder sb = new StringBuilder("ONLINE_LIST|");
+        StringBuilder sb = new StringBuilder("USER_STATUS_LIST|");
+        java.util.List<String> allUsers = UserDAO.getAllUsernames();
+
         synchronized (ChatServer.clients) {
             boolean first = true;
-            for (ClientHandler client : ChatServer.clients) {
-                if (client.username != null) {
-                    if (!first) {
-                        sb.append(",");
-                    }
-                    sb.append(client.username);
-                    first = false;
+            for (String user : allUsers) {
+                if (!first) {
+                    sb.append(",");
                 }
+                sb.append(user).append(":").append(isUserOnline(user) ? "online" : "offline");
+                first = false;
             }
         }
+
         String listMsg = sb.toString();
         synchronized (ChatServer.clients) {
             for (ClientHandler client : ChatServer.clients) {
@@ -210,5 +245,14 @@ public class ClientHandler extends Thread {
                 }
             }
         }
+    }
+
+    private static boolean isUserOnline(String username) {
+        for (ClientHandler client : ChatServer.clients) {
+            if (client.username != null && client.username.equals(username)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

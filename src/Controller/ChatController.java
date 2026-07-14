@@ -12,7 +12,7 @@ public class ChatController {
     private DataOutputStream dos;
     private String username;
     private String currentReceiver;
-    private ChatFrame view; // Giữ liên kết tới giao diện để đổ dữ liệu lên
+    private ChatFrame view;
 
     public ChatController(String host, int port) throws IOException {
         this.socket = new Socket(host, port);
@@ -29,7 +29,7 @@ public class ChatController {
         if ("LOGIN_SUCCESS".equals(response)) {
             return true;
         } else if (response.startsWith("LOGIN_FAIL|")) {
-            String reason = response.split("\\|")[1];
+            String reason = response.split("\\|", 2)[1];
             throw new IOException(reason);
         }
         return false;
@@ -43,7 +43,7 @@ public class ChatController {
         if ("REGISTER_SUCCESS".equals(response)) {
             return true;
         } else if (response.startsWith("REGISTER_FAIL|")) {
-            String reason = response.split("\\|")[1];
+            String reason = response.split("\\|", 2)[1];
             throw new IOException(reason);
         }
         return false;
@@ -65,17 +65,6 @@ public class ChatController {
         return username;
     }
 
-    // Logic gửi tin nhắn được chuyển về đây
-    // public void sendTextMessage(String msg) {
-    //     try {
-    //         dos.writeUTF("PUB_MSG|" + msg);
-    //         dos.flush();
-    //     } catch (IOException e) {
-    //         if (view != null)
-    //             view.appendMessage(">> Lỗi: Không thể gửi tin nhắn.");
-    //     }
-    // }
-
     public void sendTextMessage(String msg) {
         try {
             if (currentReceiver == null || currentReceiver.isEmpty()) {
@@ -86,49 +75,88 @@ public class ChatController {
             dos.flush();
         } catch (IOException e) {
             if (view != null) {
-                view.appendMessage(">> Lỗi: Không thể gửi tin nhắn.");
+                view.appendMessage(">> Loi: Khong the gui tin nhan.");
             }
         }
     }
 
-    // Luồng nhận tin nhắn được quản lý tại đây
+    public void requestPublicHistory() {
+        try {
+            dos.writeUTF("LOAD_PUBLIC_HISTORY|");
+            dos.flush();
+        } catch (IOException e) {
+            if (view != null) {
+                view.appendMessage(">> Loi: Khong the tai lich su chat chung.");
+            }
+        }
+    }
+
+    public void requestPrivateHistory(String otherUsername) {
+        try {
+            dos.writeUTF("LOAD_PRIVATE_HISTORY|" + otherUsername);
+            dos.flush();
+        } catch (IOException e) {
+            if (view != null) {
+                view.appendMessage(">> Loi: Khong the tai lich su chat rieng.");
+            }
+        }
+    }
+
     public void startListening() {
         Thread receiveThread = new Thread(() -> {
             try {
                 while (socket != null && !socket.isClosed()) {
                     String rawMsg = dis.readUTF();
                     String[] parts = rawMsg.split("\\|", 3);
-                    if (parts.length >= 2) {
-                        String cmd = parts[0];
-                        if (cmd.equals("MSG")) {
-                            String sender = parts[1];
-                            String content = parts[2];
-                            if (view != null) {
-                                view.appendMessage(sender + ": " + content);
-                            }
-                            
-                        } else if (cmd.equals("PRIVATE_MSG")) {
-                            String sender = parts[1];
-                            String content = parts[2];
-                            if (view != null) {
-                                view.appendMessage("[Riêng] " + sender + ": " + content);
-                            }
+                    if (parts.length < 2) {
+                        continue;
+                    }
 
-                        } else if (cmd.equals("ONLINE_LIST")) {
-                            String listStr = parts[1];
-                            if (view != null) {
-                                view.updateOnlineList(listStr.split(","));
-                            }
+                    String cmd = parts[0];
+                    if (cmd.equals("MSG") && parts.length >= 3) {
+                        String sender = parts[1];
+                        String content = parts[2];
+                        if (view != null) {
+                            view.appendMessage(sender + ": " + content);
+                        }
+                    } else if (cmd.equals("PRIVATE_MSG") && parts.length >= 3) {
+                        String sender = parts[1];
+                        String content = parts[2];
+                        if (view != null) {
+                            view.appendMessage("[Rieng] " + sender + ": " + content);
+                        }
+                    } else if (cmd.equals("HISTORY_CLEAR")) {
+                        String title = parts[1];
+                        if (view != null) {
+                            view.clearMessages(title);
+                        }
+                    } else if (cmd.equals("HISTORY_MSG") && parts.length >= 3) {
+                        String sender = parts[1];
+                        String content = parts[2];
+                        if (view != null) {
+                            view.appendHistoryMessage(sender + ": " + content);
+                        }
+                    } else if (cmd.equals("USER_STATUS_LIST")) {
+                        String listStr = parts[1];
+                        if (view != null) {
+                            view.updateUserStatusList(listStr.split(","));
+                        }
+                    } else if (cmd.equals("ONLINE_LIST")) {
+                        String listStr = parts[1];
+                        if (view != null) {
+                            view.updateOnlineList(listStr.split(","));
                         }
                     }
                 }
             } catch (IOException e) {
-                if (view != null)
-                    view.appendMessage(">> Mất kết nối tới máy chủ.");
+                if (view != null) {
+                    view.appendMessage(">> Mat ket noi toi may chu.");
+                }
             }
         });
         receiveThread.setDaemon(true);
         receiveThread.start();
+        requestPublicHistory();
     }
 
     public void closeConnection() {
