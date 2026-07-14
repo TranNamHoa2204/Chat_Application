@@ -1,5 +1,6 @@
 package GUI;
 
+import Controller.ChatController;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
@@ -15,8 +16,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-
-import Controller.ChatController;
 
 public class ChatFrame extends JFrame {
     private JList<String> listUsers;
@@ -66,6 +65,11 @@ public class ChatFrame extends JFrame {
         JPanel pnTop = new JPanel(new BorderLayout());
         pnTop.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         pnTop.add(lblDangChatVoi, BorderLayout.WEST);
+
+        JButton btnProfile = new JButton("Hồ sơ");
+        pnTop.add(btnProfile, BorderLayout.EAST);
+        btnProfile.addActionListener(e -> new ProfileFrame(controller));
+
 
         add(pnTop, BorderLayout.NORTH);
         add(scrollChat, BorderLayout.CENTER);
@@ -205,4 +209,9 @@ public class ChatFrame extends JFrame {
             }
         }
     }
+
+    public void updateTitle(String title) {
+        SwingUtilities.invokeLater(() -> setTitle(title));
+    }
+
 }
