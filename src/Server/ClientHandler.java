@@ -1,11 +1,11 @@
 package Server;
 
+import DAO.MessageDAO;
+import DAO.UserDAO;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import DAO.UserDAO;
-import DAO.MessageDAO;
 
 public class ClientHandler extends Thread {
     private Socket socket;
@@ -117,7 +117,34 @@ public class ClientHandler extends Thread {
                         continue;
 
                     sendPrivateHistory(parts[1]);
+                } else if (cmd.equals("CHANGE_PASSWORD")) {
+                    if (parts.length < 3) continue;
+                    String oldPass = parts[1];
+                    String newPass = parts[2];
+                    boolean ok = UserDAO.doiMatKhau(this.username, oldPass, newPass);
+                    if (ok) {
+                        sendMessage("CHANGE_SUCCESS|Đổi mật khẩu thành công.");
+                    } else {
+                        sendMessage("CHANGE_FAIL|Mật khẩu cũ không đúng hoặc xảy ra lỗi.");
+                    }
                 }
+
+                else if (cmd.equals("CHANGE_USERNAME")) {
+                    if (parts.length < 3) continue;
+                    String newUsername = parts[1];
+                    String password = parts[2];
+                    boolean ok = UserDAO.doiUsername(this.username, newUsername, password);
+                    if (ok) {
+                        String oldUsername = this.username;
+                        this.username = newUsername; // Cập nhật username trong session
+                        broadcastMessage("MSG|Hệ thống|" + oldUsername + " đã đổi tên thành " + newUsername);
+                        broadcastOnlineList(); // Cập nhật danh sách
+                        sendMessage("CHANGE_SUCCESS|Đổi username thành công. Username mới: " + newUsername);
+                    } else {
+                        sendMessage("CHANGE_FAIL|Mật khẩu không đúng hoặc username đã tồn tại.");
+                    }
+                }
+
             }
         } catch (IOException e) {
             System.out.println("Client [" + (this.username != null ? this.username : socket.getInetAddress())
