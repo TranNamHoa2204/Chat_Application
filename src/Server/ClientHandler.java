@@ -144,6 +144,21 @@ public class ClientHandler extends Thread {
                         sendMessage("CHANGE_FAIL|Mật khẩu không đúng hoặc username đã tồn tại.");
                     }
                 }
+                else if (cmd.equals("DELETE_ACCOUNT")) {
+                    if (parts.length < 2) continue;
+                    String password = parts[1];
+                    
+                    // Gọi sang DAO để kiểm tra và xóa
+                    boolean ok = UserDAO.xoaTaiKhoan(this.username, password);
+                    if (ok) {
+                        sendMessage("DELETE_SUCCESS|Tài khoản của bạn đã bị xóa hệ thống thành công.");
+                        broadcastMessage("MSG|Hệ thống|" + this.username + " đã bị xóa tài khoản.");
+                        closeEverything(); // Đóng kết nối của user này
+                    } else {
+                        sendMessage("CHANGE_FAIL|Mật khẩu xác nhận không đúng hoặc lỗi CSDL.");
+                    }
+                }
+
 
             }
         } catch (IOException e) {
