@@ -212,24 +212,24 @@ public class ChatController {
                         String fileName = meta[0];
                         long fileSize = Long.parseLong(meta[1]);
 
-                        // Nhận raw bytes
+                        // Nhận raw bytes và lưu vào Downloads
                         Path savePath = Path.of(System.getProperty("user.home"), "Downloads", fileName);
                         try (FileOutputStream fos = new FileOutputStream(savePath.toFile())) {
-                            long totalReceived = 0;
                             int chunkLen;
                             while ((chunkLen = dis.readInt()) != -1) {
                                 byte[] chunk = new byte[chunkLen];
                                 dis.readFully(chunk);
                                 fos.write(chunk);
-                                totalReceived += chunkLen;
                             }
                         }
                         // Đọc FILE_DONE
                         dis.readUTF(); // bỏ qua "FILE_DONE|..."
 
+                        // Định dạng: "[FILE] sender gửi: filename -> /absolute/path"
+                        // ChatFrame.parseAndAddBubble() sẽ nhận ra định dạng này
                         if (view != null)
                             view.appendMessage("[FILE] " + sender + " gửi: " + fileName
-                                    + " -> Đã lưu tại: " + savePath);
+                                    + " -> " + savePath.toAbsolutePath());
                     }
 
 
