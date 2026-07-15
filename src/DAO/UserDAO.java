@@ -13,7 +13,7 @@ public class UserDAO {
     public static boolean kiemTraDangNhap(String username, String password) {
         String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
             ps.setString(2, password); // Trong thực tế nên dùng BCrypt hash nhưng bài tập thì kiểm tra chuỗi thường
             try (ResultSet rs = ps.executeQuery()) {
@@ -29,7 +29,7 @@ public class UserDAO {
     public static boolean dangKy(String username, String password) {
         String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
             ps.setString(2, password);
             return ps.executeUpdate() > 0;
@@ -39,11 +39,33 @@ public class UserDAO {
         }
     }
 
+    public static boolean xoaTaiKhoan(String user, String pass) {
+        // 1. Kiểm tra đăng nhập (để xác thực đúng mk)
+        if (!kiemTraDangNhap(user, pass)) {
+            return false;
+        }
+
+        // 2. Tiến hành xóa ở DB (Tùy theo ràng buộc khoá ngoại để bạn cần đưa ra Query
+        // phù hợp)
+        String sql = "DELETE FROM users WHERE username = ?";
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setString(1, user);
+            int rowAffected = pst.executeUpdate();
+            return rowAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     // 3. Lấy ID từ username
     public static int getUserId(String username) {
         String sql = "SELECT id FROM users WHERE username = ?";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -61,8 +83,8 @@ public class UserDAO {
         String sql = "SELECT username FROM users ORDER BY username ASC";
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 users.add(rs.getString("username"));
             }
@@ -80,7 +102,7 @@ public class UserDAO {
         }
         String sql = "UPDATE users SET password = ? WHERE username = ?";
         try (Connection conn = DBConnection.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, newPassword);
             ps.setString(2, username);
             return ps.executeUpdate() > 0;
@@ -98,7 +120,7 @@ public class UserDAO {
         }
         String sql = "UPDATE users SET username = ? WHERE username = ?";
         try (Connection conn = DBConnection.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, newUsername);
             ps.setString(2, oldUsername);
             return ps.executeUpdate() > 0;
