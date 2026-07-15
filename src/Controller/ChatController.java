@@ -49,6 +49,17 @@ public class ChatController {
         return false;
     }
 
+    public void deleteAccount(String password) {
+        try {
+            // Gửi lệnh xóa kèm theo mật khẩu xác nhận
+            dos.writeUTF("DELETE_ACCOUNT|" + password);
+            dos.flush();
+        } catch (IOException e) {
+            if (view != null)
+                view.appendMessage(">> Lỗi: Không thể gửi yêu cầu xóa tài khoản.");
+        }
+    }
+
     public void setCurrentReceiver(String currentReceiver) {
         this.currentReceiver = currentReceiver;
     }
@@ -148,16 +159,31 @@ public class ChatController {
                         }
                     } else if (cmd.equals("CHANGE_SUCCESS")) {
                         String msg = parts[1];
-                        if (view != null) view.appendMessage(">> " + msg);
+                        if (view != null)
+                            view.appendMessage(">> " + msg);
                         // Nếu đổi username thành công, cập nhật lại title
                         if (msg.contains("username")) {
                             String newName = msg.replace("Đổi username thành công. Username mới: ", "").trim();
                             this.username = newName;
-                            if (view != null) view.updateTitle("Messenger - " + newName);
+                            if (view != null)
+                                view.updateTitle("Messenger - " + newName);
                         }
                     } else if (cmd.equals("CHANGE_FAIL")) {
                         String reason = parts[1];
-                        if (view != null) view.appendMessage(">> Thất bại: " + reason);
+                        if (view != null)
+                            view.appendMessage(">> Thất bại: " + reason);
+                    } else if (cmd.equals("DELETE_SUCCESS")) {
+                        String msg = parts.length > 1
+                                ? parts[1]
+                                : "Tài khoản đã được xóa.";
+
+                        if (view != null) {
+                            view.logoutToLogin(msg);
+                        }
+                    } else if (cmd.equals("DELETE_FAIL")) {
+                        String reason = parts.length > 1 ? parts[1] : "Xóa tài khoản thất bại.";
+                        if (view != null)
+                            view.appendMessage(">> Lỗi xóa tài khoản: " + reason);
                     }
 
                 }
@@ -190,7 +216,8 @@ public class ChatController {
             dos.writeUTF("CHANGE_PASSWORD|" + oldPassword + "|" + newPassword);
             dos.flush();
         } catch (IOException e) {
-            if (view != null) view.appendMessage(">> Lỗi: Không thể gửi yêu cầu đổi mật khẩu.");
+            if (view != null)
+                view.appendMessage(">> Lỗi: Không thể gửi yêu cầu đổi mật khẩu.");
         }
     }
 
@@ -199,9 +226,9 @@ public class ChatController {
             dos.writeUTF("CHANGE_USERNAME|" + newUsername + "|" + password);
             dos.flush();
         } catch (IOException e) {
-            if (view != null) view.appendMessage(">> Lỗi: Không thể gửi yêu cầu đổi username.");
+            if (view != null)
+                view.appendMessage(">> Lỗi: Không thể gửi yêu cầu đổi username.");
         }
     }
 
-    
 }
