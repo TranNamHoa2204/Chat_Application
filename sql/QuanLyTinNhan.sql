@@ -30,3 +30,15 @@ CREATE TABLE messages (
 -- Thêm thử 2 tài khoản mẫu
 INSERT INTO users (username, password) VALUES ('admin', '123456');
 INSERT INTO users (username, password) VALUES ('guest', '123456');
+
+-- Tạo bảng lưu lịch sử gửi file
+CREATE TABLE file_transfers (
+    id          INT IDENTITY(1,1) PRIMARY KEY,
+    sender_id   INT NOT NULL,
+    receiver_id INT DEFAULT NULL,          -- NULL = gửi chung (Public)
+    file_name   NVARCHAR(255) NOT NULL,
+    file_size   BIGINT NOT NULL,           -- bytes
+    sent_at     DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (sender_id)   REFERENCES users(id),
+    FOREIGN KEY (receiver_id) REFERENCES users(id)
+);

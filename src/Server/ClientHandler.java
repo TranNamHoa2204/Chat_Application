@@ -187,11 +187,19 @@ public class ClientHandler extends Thread {
 
                     byte[] fileData = baos.toByteArray();
 
-                    // Relay tới người nhận
+                    // Lưu lịch sử file vào DB
+                    int senderId = UserDAO.getUserId(this.username);
                     if ("PUBLIC".equals(receiver)) {
-                        // Gửi cho tất cả
+                        if (senderId != -1) {
+                            MessageDAO.luuLichSuFile(senderId, null, fileName, fileSize);
+                        }
+                        // Relay tới tất cả
                         broadcastFile(this.username, fileName, fileData);
                     } else {
+                        int receiverId = UserDAO.getUserId(receiver);
+                        if (senderId != -1 && receiverId != -1) {
+                            MessageDAO.luuLichSuFile(senderId, receiverId, fileName, fileSize);
+                        }
                         // Gửi riêng
                         ClientHandler target = findClientByUsername(receiver);
                         if (target != null) {

@@ -293,19 +293,12 @@ public class ChatController {
 
                 // 2. Gửi raw bytes theo từng chunk
                 byte[] buffer = new byte[CHUNK_SIZE];
-                long totalSent = 0;
                 try (FileInputStream fis = new FileInputStream(file)) {
                     int bytesRead;
                     while ((bytesRead = fis.read(buffer)) != -1) {
                         dos.writeInt(bytesRead);        // độ dài chunk này
                         dos.write(buffer, 0, bytesRead); // dữ liệu thực
                         dos.flush();
-                        totalSent += bytesRead;
-
-                        // Cập nhật tiến trình lên UI (tuỳ chọn)
-                        final int percent = (int) (totalSent * 100 / fileSize);
-                        if (view != null)
-                            view.appendMessage("[FILE] Đang gửi " + file.getName() + "... " + percent + "%");
                     }
                 }
 
