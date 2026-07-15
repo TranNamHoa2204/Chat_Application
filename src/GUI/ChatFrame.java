@@ -11,6 +11,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -185,6 +186,18 @@ public class ChatFrame extends JFrame {
             if (selectedUser != null) {
                 selectUserInList(selectedUser);
             }
+        });
+    }
+
+    public void logoutToLogin(String message) {
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(this, message);
+
+            controller.closeConnection();
+
+            dispose();
+
+            new LoginFrame();
         });
     }
 
