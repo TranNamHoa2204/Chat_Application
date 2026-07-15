@@ -5,9 +5,12 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -58,6 +61,25 @@ public class ChatFrame extends JFrame {
         pnBottom.add(txtTinNhanNhap, BorderLayout.CENTER);
         pnBottom.add(btnGui, BorderLayout.EAST);
         pnBottom.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        JButton btnFile = new JButton("📎");
+        btnFile.addActionListener(e -> {
+            JFileChooser fc = new JFileChooser();
+            if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File file = fc.getSelectedFile();
+                // Cảnh báo nếu file quá lớn
+                if (file.length() > 5 * 1024 * 1024) { // 5MB
+                    JOptionPane.showMessageDialog(this, 
+                        "File không được vượt quá 5MB!", 
+                        "Lỗi", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                controller.sendFile(file);
+                appendMessage("[File] Bạn gửi: " + file.getName());
+            }
+        });
+        pnBottom.add(btnFile, BorderLayout.WEST); // thêm vào panel gửi
+
 
         JPanel pnRight = new JPanel(new BorderLayout(5, 5));
         pnRight.add(scrollUsers, BorderLayout.CENTER);

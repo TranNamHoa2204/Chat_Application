@@ -437,3 +437,44 @@ Luồng B muốn vào → phải chờ đến khi A giải phóng lock
 Luồng A thực hiện xong → giải phóng lock
 
 Luồng B được vào → tiếp tục thực hiện
+
+
+
+===========================================
+🖥️ Server/ — Phía máy chủ
+- ChatServer.java	Điểm khởi động server. Mở cổng lắng nghe (port), chấp nhận kết nối từ client, tạo một ClientHandler mới cho mỗi client kết nối vào.
+
+- ClientHandler.java	Xử lý từng client riêng biệt. Chạy trên một Thread riêng, đọc lệnh từ client (LOGIN, PUB_MSG, DELETE_ACCOUNT...), xử lý và phản hồi. Đây là file logic chính của server.
+
+🎮 Controller/ — Tầng điều phối phía client
+- ChatController.java	Cầu nối giữa GUI và socket. Quản lý kết nối TCP tới server, gửi các lệnh (sendTextMessage, deleteAccount, changePassword...), lắng nghe phản hồi từ server trong một thread nền và cập nhật lại giao diện (ChatFrame).
+
+🗄️ DAO/ — Truy cập cơ sở dữ liệu (Data Access Object)
+- UserDAO.java	Thao tác với bảng Users trong DB. Cung cấp các hàm: đăng nhập (kiemTraDangNhap), đăng ký (dangKy), đổi mật khẩu, đổi username, xóa tài khoản (xoaTaiKhoan), lấy danh sách user.
+
+- MessageDAO.java	Thao tác với bảng Messages trong DB. Lưu tin nhắn, lấy lịch sử chat chung và chat riêng.
+
+🗃️ Database/ — Kết nối cơ sở dữ liệu
+- DBConnection.java	Tạo kết nối JDBC tới SQL Server. Chứa thông tin host, port, tên DB, username/password. Trả về đối tượng Connection dùng chung cho các DAO.
+
+🖼️ GUI/ — Giao diện người dùng (Swing)
+- LoginFrame.java	Màn hình đăng nhập. Nhập username/password, gọi ChatController.login(), chuyển sang ChatFrame nếu thành công. Có nút mở màn hình đăng ký.
+
+- RegisterFrame.java	Màn hình đăng ký tài khoản. Nhập thông tin, gọi ChatController.register().
+
+- ChatFrame.java	Màn hình chat chính. Hiển thị tin nhắn, danh sách người dùng, cho phép gửi tin nhắn công khai/riêng tư. Có nút "Hồ sơ" mở ProfileFrame.
+
+- ProfileFrame.java	Màn hình quản lý tài khoản. Gồm 2 tab: đổi mật khẩu và đổi username; có nút "Xóa tài khoản" để xóa và thoát về màn hình login.
+
+===========================
+gửi file lớn:
+- Giao thức mới
+Client → Server:
+  FILE_START|<fileName>|<fileSize>|<receiverOrPUBLIC>
+  [raw bytes, chunk by chunk]
+  FILE_END|<fileName>
+
+Server → Clients:
+  FILE_META|<sender>|<fileName>|<fileSize>
+  [raw bytes]
+  FILE_DONE|<fileName>

@@ -2,6 +2,7 @@ package Server;
 
 import DAO.MessageDAO;
 import DAO.UserDAO;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -9,7 +10,7 @@ import java.net.Socket;
 
 public class ClientHandler extends Thread {
     private Socket socket;
-    private DataOutputStream dos;
+    public DataOutputStream dos;
     private DataInputStream dis;
     private String username;
 
@@ -157,7 +158,51 @@ public class ClientHandler extends Thread {
                     } else {
                         sendMessage("CHANGE_FAIL|Mật khẩu xác nhận không đúng hoặc lỗi CSDL.");
                     }
+                } 
+                // else if (cmd.equals("SEND_FILE")) {
+                //     if (parts.length < 3) continue;
+                //     String fileName = parts[1];
+                //     String base64   = parts[2];
+                //     // Broadcast tới người khác (hoặc gửi riêng nếu cần)
+                //     broadcastMessage("FILE_MSG|" + this.username 
+                //                     + "|" + fileName + ":" + base64);
+                // }
+                else if (cmd.equals("FILE_START")) {
+                    // parts[1]=fileName, parts[2]=fileSize, parts[3]=receiver
+                    if (parts.length < 3) continue;
+                    String[] subParts = rawMsg.split("\\|", 4);
+                    String fileName = subParts[1];
+                    long fileSize   = Long.parseLong(subParts[2]);
+                    String receiver = subParts.length > 3 ? subParts[3] : "PUBLIC";
+
+                    // Đọc toàn bộ bytes từ client gửi lên
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    int chunkLen;
+                    while ((chunkLen = dis.readInt()) != -1) {
+                        byte[] chunk = new byte[chunkLen];
+                        dis.readFully(chunk);
+                        baos.write(chunk);
+                    }
+                    dis.readUTF(); // bỏ FILE_END
+
+                    byte[] fileData = baos.toByteArray();
+
+                    // Relay tới người nhận
+                    if ("PUBLIC".equals(receiver)) {
+                        // Gửi cho tất cả
+                        broadcastFile(this.username, fileName, fileData);
+                    } else {
+                        // Gửi riêng
+                        ClientHandler target = findClientByUsername(receiver);
+                        if (target != null) {
+                            sendFileTo(target, this.username, fileName, fileData);
+                        } else {
+                            sendMessage("MSG|Hệ thống|" + receiver + " không online, không thể gửi file.");
+                        }
+                    }
                 }
+
+
 
 
             }
@@ -297,4 +342,36 @@ public class ClientHandler extends Thread {
         }
         return false;
     }
+
+    private void broadcastFile(String sender, String fileName, byte[] data) throws IOException {
+        synchronized (ChatServer.clients) {
+            for (ClientHandler client : ChatServer.clients) {
+                if (client != this && client.username != null) {
+                    sendFileTo(client, sender, fileName, data);
+                }
+            }
+        }
+    }
+
+    private void sendFileTo(ClientHandler target, String sender,
+                            String fileName, byte[] data) throws IOException {
+        DataOutputStream targetDos = target.dos;
+        synchronized (targetDos) {
+            targetDos.writeUTF("FILE_META|" + sender + "|" + fileName + ":" + data.length);
+            targetDos.flush();
+
+            int chunkSize = 64 * 1024;
+            int offset = 0;
+            while (offset < data.length) {
+                int len = Math.min(chunkSize, data.length - offset);
+                targetDos.writeInt(len);
+                targetDos.write(data, offset, len);
+                offset += len;
+            }
+            targetDos.writeInt(-1); // sentinel
+            targetDos.writeUTF("FILE_DONE|" + fileName);
+            targetDos.flush();
+        }
+    }
+
 }

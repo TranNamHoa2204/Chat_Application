@@ -3,8 +3,12 @@ package Controller;
 import GUI.ChatFrame;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Path;
 
 public class ChatController {
     private Socket socket;
@@ -184,7 +188,50 @@ public class ChatController {
                         String reason = parts.length > 1 ? parts[1] : "Xóa tài khoản thất bại.";
                         if (view != null)
                             view.appendMessage(">> Lỗi xóa tài khoản: " + reason);
+                    } 
+                    // else if(cmd.equals("FILE_MSG") && parts.length >=3){
+                    //     String sender = parts[1];
+
+                    //     String[] payload = parts[2].split(":",2);
+                    //     String fileName = payload[0];
+                    //     String base64 = payload[1];
+
+                    //     // giải mã và lưu file
+                    //     byte[] data = Base64.getDecoder().decode(base64);
+                    //     Path savePath = Path.of(System.getProperty("user.home"), "Downloads", fileName);
+                    //     Files.write(savePath, data);
+
+                    //     if(view != null)
+                    //         view.appendMessage("[FILE] " + sender + " gửi: " + fileName + " -> Đã lưu tại" + savePath);
+                    // }
+
+                    else if (cmd.equals("FILE_META") && parts.length >= 3) {
+                        // parts[1] = sender, parts[2] = fileName:fileSize
+                        String sender = parts[1];
+                        String[] meta = parts[2].split(":", 2);
+                        String fileName = meta[0];
+                        long fileSize = Long.parseLong(meta[1]);
+
+                        // Nhận raw bytes
+                        Path savePath = Path.of(System.getProperty("user.home"), "Downloads", fileName);
+                        try (FileOutputStream fos = new FileOutputStream(savePath.toFile())) {
+                            long totalReceived = 0;
+                            int chunkLen;
+                            while ((chunkLen = dis.readInt()) != -1) {
+                                byte[] chunk = new byte[chunkLen];
+                                dis.readFully(chunk);
+                                fos.write(chunk);
+                                totalReceived += chunkLen;
+                            }
+                        }
+                        // Đọc FILE_DONE
+                        dis.readUTF(); // bỏ qua "FILE_DONE|..."
+
+                        if (view != null)
+                            view.appendMessage("[FILE] " + sender + " gửi: " + fileName
+                                    + " -> Đã lưu tại: " + savePath);
                     }
+
 
                 }
             } catch (IOException e) {
@@ -230,5 +277,52 @@ public class ChatController {
                 view.appendMessage(">> Lỗi: Không thể gửi yêu cầu đổi username.");
         }
     }
+
+    private static final int CHUNK_SIZE = 64 * 1024; // 64 KB mỗi chunk
+
+    public void sendFile(File file) {
+        new Thread(() -> {
+            try {
+                long fileSize = file.length();
+                String receiver = (currentReceiver == null || currentReceiver.isEmpty())
+                        ? "PUBLIC" : currentReceiver;
+
+                // 1. Báo hiệu bắt đầu
+                dos.writeUTF("FILE_START|" + file.getName() + "|" + fileSize + "|" + receiver);
+                dos.flush();
+
+                // 2. Gửi raw bytes theo từng chunk
+                byte[] buffer = new byte[CHUNK_SIZE];
+                long totalSent = 0;
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    int bytesRead;
+                    while ((bytesRead = fis.read(buffer)) != -1) {
+                        dos.writeInt(bytesRead);        // độ dài chunk này
+                        dos.write(buffer, 0, bytesRead); // dữ liệu thực
+                        dos.flush();
+                        totalSent += bytesRead;
+
+                        // Cập nhật tiến trình lên UI (tuỳ chọn)
+                        final int percent = (int) (totalSent * 100 / fileSize);
+                        if (view != null)
+                            view.appendMessage("[FILE] Đang gửi " + file.getName() + "... " + percent + "%");
+                    }
+                }
+
+                // 3. Báo hiệu kết thúc
+                dos.writeInt(-1); // sentinel = hết file
+                dos.writeUTF("FILE_END|" + file.getName());
+                dos.flush();
+
+                if (view != null)
+                    view.appendMessage("[FILE] Gửi xong: " + file.getName());
+
+            } catch (IOException e) {
+                if (view != null)
+                    view.appendMessage(">> Lỗi gửi file: " + e.getMessage());
+            }
+        }).start(); // chạy trên thread riêng để không đơ UI
+    }
+
 
 }
